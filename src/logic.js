@@ -55,7 +55,9 @@ function parseBlocks(text, tasks) {
   const remaining = [...tasks];
   const blocks = [];
   for (const line of lines) {
-    const m = line.match(/^(.+?)\s*[-–—:]\s*(.+)$/);
+    // Require whitespace around the separator so a hyphenated task (e.g.
+    // "Review sign-up flow") doesn't get mis-split mid-word.
+    const m = line.match(/^(.+?)\s[-–—:]\s(.+)$/);
     if (!m) continue;
     const timePart = m[1].trim();
     const taskPart = m[2].trim();
