@@ -30,12 +30,22 @@ function significantWords(s) {
 
 function matchOriginalTask(line, remainingTasks) {
   const lineWords = new Set(significantWords(line));
+  const lineWordsAll = new Set(line.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
   let best = null;
   let bestScore = 0;
   for (const task of remainingTasks) {
-    const taskWords = significantWords(task);
+    // A short task (e.g. "gym", "call") can have an empty word list after
+    // the length>3 filter, which used to skip it entirely — meaning it
+    // could NEVER match any line and always forced the fallback schedule.
+    // Fall back to unfiltered words for matching when that happens.
+    let taskWords = significantWords(task);
+    let words = lineWords;
+    if (taskWords.length === 0) {
+      taskWords = task.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      words = lineWordsAll;
+    }
     if (taskWords.length === 0) continue;
-    const overlap = taskWords.filter((w) => lineWords.has(w)).length;
+    const overlap = taskWords.filter((w) => words.has(w)).length;
     const score = overlap / taskWords.length;
     if (score > bestScore) {
       bestScore = score;
@@ -49,7 +59,11 @@ function matchOriginalTask(line, remainingTasks) {
 function parseBlocks(text, tasks) {
   const lines = text
     .split("\n")
-    .map((l) => l.replace(/^[\s\-*\d.)]+/, "").trim())
+    // Strip only an actual list marker ("- ", "* ", "1. ", "2) ") from the
+    // start of a line — the old broad character-class strip also consumed
+    // a bare leading digit, which mangled a line's own clock time (e.g.
+    // "9:00-9:30 - Task" lost its leading "9" and became ":00-9:30 - Task").
+    .map((l) => l.trim().replace(/^(?:[-*]\s+|\d+[.)]\s+)/, "").trim())
     .filter((l) => l.length > 1);
 
   const remaining = [...tasks];
