@@ -21,6 +21,18 @@ Built on [Tether's QVAC SDK](https://www.npmjs.com/package/@qvac/sdk) — all in
 
 Each time block is matched back to one of your original tasks by word overlap. If the model invents a task or drops one, the app falls back to a deterministic even split of your hours across your original task list.
 
+## Example
+
+Input: `{"tasks":"Write project proposal, Team standup, Review pull requests, Deep work on feature X","hours":"6"}`
+
+`src/logic.js` asks the model for time blocks matched back to your exact tasks by word overlap. The response shape:
+```json
+{"tasks":["Write project proposal","Team standup","Review pull requests","Deep work on feature X"],
+ "hours":6,
+ "schedule":[{"time":"...","task":"..."}, ...]}
+```
+If the model invents a task or drops one, `schedule` falls back to `fallbackSchedule()` in `src/logic.js` — a deterministic even split of the 6 hours across your 4 original tasks in order (e.g. `0:00–1:30`, `1:30–3:00`, ...).
+
 ## License
 
 MIT
